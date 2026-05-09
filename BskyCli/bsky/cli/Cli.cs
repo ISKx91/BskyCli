@@ -71,6 +71,10 @@ namespace BskyCli.bsky.cli
                     }
                     this.Post();
                 }
+                else if (command == "cls")
+                {
+                    this.ClearScreen();
+                }
                 else
                 {
                     Console.WriteLine($"Unknown command: {command}");
@@ -128,17 +132,48 @@ namespace BskyCli.bsky.cli
             Console.WriteLine("  logout - Log out of Bluesky");
             Console.WriteLine("  help   - Show this help message");
             Console.WriteLine("  post   - Send post");
+            Console.WriteLine("  cls    - Clear Screen");
             Console.WriteLine("  exit   - Exit the CLI");
         }
 
         private void Post()
         {
-            Console.Write("Enter your post content: ");
-            var content = Console.ReadLine();
+            var content = string.Empty;
+            Console.WriteLine("Enter your post content");
+            while (true)
+            {
+                Console.Write("> ");
+                var line = Console.ReadLine();
+                if (line == ";")
+                {
+                    break;
+                }
+                content += line + Environment.NewLine;
+            }
+            Console.Clear();
+            ConsoleInfo("============================================================");
+            ConsoleInfo("         Is it okay to post the following content ?         ");
+            ConsoleInfo("============================================================");
+            ConsoleInfo(content);
+            ConsoleInfo("------------------------------------------------------------");
+            Console.Write("(y/n) > ");
+            var confirm = Console.ReadLine();
+            if (confirm?.Trim().ToLower() != "y")
+            {
+                ConsoleWarning("Post cancelled.");
+                return;
+            }
             var statusCode = this.Client.Post(content, DateTime.Now).Result;
             Console.WriteLine($"Post successful! HTTP Status Code: {statusCode}");
         }
 
+        /// <summary>
+        /// 画面をクリアする
+        /// </summary>
+        private void ClearScreen()
+        {
+            Console.Clear();
+        }
 
 
         /// <summary>
@@ -147,7 +182,7 @@ namespace BskyCli.bsky.cli
         /// <returns></returns>
         private static string ReadPassword()
         {
-            string password = "";
+            string password = string.Empty;
             ConsoleKeyInfo info = Console.ReadKey(true);
             while (info.Key != ConsoleKey.Enter)
             {

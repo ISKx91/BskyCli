@@ -37,7 +37,7 @@ namespace BskyCli.bsky.client
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.server.createSession", content).Result;
+                var response = await httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.server.createSession", content);
 
                 var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -61,7 +61,7 @@ namespace BskyCli.bsky.client
 
                 httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.refreshJwt);
 
-                var response = httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.server.deleteSession", null).Result;
+                var response = await httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.server.deleteSession", null);
 
                 if (!response.IsSuccessStatusCode)
                 {

@@ -36,7 +36,7 @@ namespace BskyCli.bsky.client
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.repo.createRecord", content).Result;
+                var response = await httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.repo.createRecord", content);
 
                 var responseContent = await response.Content.ReadAsStringAsync();
 

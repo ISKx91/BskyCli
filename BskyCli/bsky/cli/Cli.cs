@@ -2,6 +2,9 @@
 
 namespace BskyCli.bsky.cli
 {
+    /// <summary>
+    /// CLI (Command Line Interface) クラスは、ユーザーがコマンドを入力してBlueskyと対話できるようにするためのクラスです。
+    /// </summary>
     internal class Cli
     {
         private Client? Client { get; set; }
@@ -9,17 +12,15 @@ namespace BskyCli.bsky.cli
         private string Prompt { get; set; }
 
 
-        private const string NotLoggedInPrompt = "Not logged in";
+        private const string NOT_LOGGED_IN_PROMPT = "Not logged in";
 
-
+        /// <summary>
+        /// コンストラクタは、CLIの初期状態を設定します。ユーザーがログインしていない状態では、プロンプトは "Not logged in" に設定されます。
+        /// </summary>
         internal Cli()
         {
-            this.Prompt = Cli.NotLoggedInPrompt;
+            this.Prompt = Cli.NOT_LOGGED_IN_PROMPT;
         }
-
-
-
-
 
 
         internal async Task<int> Run()
@@ -86,7 +87,7 @@ namespace BskyCli.bsky.cli
 
         private void WritePrompt()
         {
-            if (this.Prompt != Cli.NotLoggedInPrompt)
+            if (this.Prompt != Cli.NOT_LOGGED_IN_PROMPT)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
             }
@@ -121,7 +122,7 @@ namespace BskyCli.bsky.cli
         {
             this.Client?.Logout().Wait();
             this.Client = null;
-            this.Prompt = Cli.NotLoggedInPrompt;
+            this.Prompt = Cli.NOT_LOGGED_IN_PROMPT;
             ConsoleSuccess("Logged out successfully.");
         }
 
@@ -163,8 +164,8 @@ namespace BskyCli.bsky.cli
                 ConsoleWarning("Post cancelled.");
                 return;
             }
-            var statusCode = this.Client.Post(content, DateTime.Now).Result;
-            Console.WriteLine($"Post successful! HTTP Status Code: {statusCode}");
+            var response = this.Client.Post(content, DateTime.Now).Result;
+            Console.WriteLine($"Post successful! HTTP Status Code: {response.StatusCode}");
         }
 
         /// <summary>
@@ -177,7 +178,7 @@ namespace BskyCli.bsky.cli
 
 
         /// <summary>
-        /// 
+        /// パスワードの入力を受付けるメソッドです。入力された文字は画面に表示されません。
         /// </summary>
         /// <returns></returns>
         private static string ReadPassword()

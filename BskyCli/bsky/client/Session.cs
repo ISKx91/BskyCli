@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 
@@ -6,8 +8,15 @@ namespace BskyCli.bsky.client
 {
     internal partial class Client
     {
+        /// <summary>
+        /// Sessionクラスは、Blueskyへのログインセッションを管理するためのクラスです。
+        /// ユーザーの認証情報やセッションに関連するデータを保持し、セッションの作成や削除などの操作を提供します。
+        /// </summary>
         internal class Session
         {
+            private const string ENDPOINT_CREATE_SESSION = "https://bsky.social/xrpc/com.atproto.server.createSession";
+            private const string ENDPOINT_DELETE_SESSION = "https://bsky.social/xrpc/com.atproto.server.deleteSession";
+
             internal string accessJwt { get; private set; }
             internal string refreshJwt { get; private set; }
             internal string handle { get; private set; }
@@ -26,25 +35,8 @@ namespace BskyCli.bsky.client
 
             internal static async Task<Session> CreateSession(string identifier, string password)
             {
-                using var httpClient = new HttpClient();
-
-                var payload = new
-                {
-                    identifier,
-                    password
-                };
-
-                var json = JsonSerializer.Serialize(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.server.createSession", content);
-
+                var response = await Http.HttpPost(Session.ENDPOINT_CREATE_SESSION, null, new { identifier, password });
                 var responseContent = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"Login failed: HTTP Error {response.StatusCode}");
-                }
 
                 var jsonDoc    = JsonDocument.Parse(responseContent);
                 var accessJwt  = jsonDoc.RootElement.GetProperty("accessJwt").GetString() ?? string.Empty;
@@ -55,20 +47,11 @@ namespace BskyCli.bsky.client
                 return new Session(accessJwt, refreshJwt, handle, did, email);
             }
 
-            internal async Task<HttpStatusCode> DeleteSession()
+            internal async Task<HttpResponseMessage> DeleteSession()
             {
-                using var httpClient = new HttpClient();
+                var response = await Http.HttpPost(Session.ENDPOINT_DELETE_SESSION, new AuthenticationHeaderValue("Bearer", this.refreshJwt), null);
 
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.refreshJwt);
-
-                var response = await httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.server.deleteSession", null);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"Logout failed: HTTP Error {response.StatusCode}");
-                }
-
-                return response.StatusCode;
+                return response;
             }
         }
     }

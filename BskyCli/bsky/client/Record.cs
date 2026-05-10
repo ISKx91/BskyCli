@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
-using System.Text.Json;
+﻿using System.Net.Http.Headers;
 
 namespace BskyCli.bsky.client
 {
@@ -10,18 +6,16 @@ namespace BskyCli.bsky.client
     {
         internal class Record
         {
+            private const string ENDPOINT_CREATE_RECORD = "https://bsky.social/xrpc/com.atproto.repo.createRecord";
+
             internal Record()
             {
 
             }
 
 
-            internal async Task<HttpStatusCode> CreatePost(Session session, string text, DateTime? createdAt)
+            internal async Task<HttpResponseMessage> CreatePost(Session session, string text, DateTime? createdAt)
             {
-                using var httpClient = new HttpClient();
-
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", session.accessJwt);
-
                 var payload = new
                 {
                     repo = session.handle,
@@ -33,19 +27,9 @@ namespace BskyCli.bsky.client
                     }
                 };
 
-                var json = JsonSerializer.Serialize(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await Http.HttpPost(ENDPOINT_CREATE_RECORD, new AuthenticationHeaderValue("Bearer", session.accessJwt), payload);
 
-                var response = await httpClient.PostAsync("https://bsky.social/xrpc/com.atproto.repo.createRecord", content);
-
-                var responseContent = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"Post failed: HTTP Error {response.StatusCode}");
-                }
-
-                return response.StatusCode;
+                return response;
             }
         }
     }

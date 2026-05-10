@@ -2,6 +2,9 @@
 
 namespace BskyCli.bsky.client
 {
+    /// <summary>
+    /// Clientクラスは、BlueskyのAPIと対話するための主要なクラスであり、ユーザーのセッション管理や投稿作成などの機能を提供します。
+    /// </summary>
     internal partial class Client
     {
         internal Session session { get; private set; }
@@ -28,12 +31,12 @@ namespace BskyCli.bsky.client
         /// Blueskyからログアウトし、セッションを削除するためのメソッドです。
         /// </summary>
         /// <returns></returns>
-        internal async Task<HttpStatusCode> Logout()
+        internal async Task<HttpResponseMessage> Logout()
         {
             return await this.session.DeleteSession();
         }
 
-        internal async Task<HttpStatusCode> Post(string text, DateTime? createdAt)
+        internal async Task<HttpResponseMessage> Post(string text, DateTime? createdAt)
         {
             if (createdAt == null)
             {
@@ -41,8 +44,8 @@ namespace BskyCli.bsky.client
             }
 
             var record = new Record();
-            var statusCode = await record.CreatePost(this.session, text, createdAt);
-            return statusCode;
+            var response = await record.CreatePost(this.session, text, createdAt);
+            return response;
         }
 
     }

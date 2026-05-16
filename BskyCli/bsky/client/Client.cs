@@ -31,10 +31,7 @@ namespace BskyCli.bsky.client
         /// Blueskyからログアウトし、セッションを削除するためのメソッドです。
         /// </summary>
         /// <returns></returns>
-        internal async Task<HttpResponseMessage> Logout()
-        {
-            return await this.session.DeleteSession();
-        }
+        internal async Task<HttpResponseMessage> Logout() => await this.session.DeleteSession();
 
         internal async Task<HttpResponseMessage> Post(string text, DateTime? createdAt)
         {

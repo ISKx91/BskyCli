@@ -5,7 +5,7 @@ namespace BskyCli.bsky.cli
     /// <summary>
     /// CLI (Command Line Interface) クラスは、ユーザーがコマンドを入力してBlueskyと対話できるようにするためのクラスです。
     /// </summary>
-    internal class Cli
+    internal partial class Cli
     {
         private Client? Client { get; set; }
 
@@ -45,7 +45,7 @@ namespace BskyCli.bsky.cli
                 {
                     if (this.Client != null)
                     {
-                        ConsoleError("You are already logged in. Please logout first before logging in again.");
+                        ConsoleCommon.ConsoleError("You are already logged in. Please logout first before logging in again.");
                         continue;
                     }
                     this.Login();
@@ -54,7 +54,7 @@ namespace BskyCli.bsky.cli
                 {
                     if (this.Client == null)
                     {
-                        ConsoleError("You are not logged in.");
+                        ConsoleCommon.ConsoleError("You are not logged in.");
                         continue;
                     }
                     this.Logout();
@@ -67,14 +67,14 @@ namespace BskyCli.bsky.cli
                 {
                     if (this.Client == null)
                     {
-                        ConsoleError("You are not logged in.");
+                        ConsoleCommon.ConsoleError("You are not logged in.");
                         continue;
                     }
                     this.Post();
                 }
                 else if (command == "cls")
                 {
-                    this.ClearScreen();
+                    ConsoleCommon.ClearScreen();
                 }
                 else
                 {
@@ -106,13 +106,13 @@ namespace BskyCli.bsky.cli
             Console.Write("Enter username or e-mail address:");
             var identifier = Console.ReadLine();
             Console.Write("Enter password:");
-            var password = ReadPassword();
+            var password = ConsoleCommon.ReadPassword();
 
-            var client = Client.Login(identifier, password).Result;
+            var client = Client.Login(identifier!, password).Result;
 
             this.Client = client;
             this.Prompt = client.session.handle;
-            ConsoleSuccess("Login successful! You can now use the CLI to interact with Bluesky.");
+            ConsoleCommon.ConsoleSuccess("Login successful! You can now use the CLI to interact with Bluesky.");
         }
 
         /// <summary>
@@ -120,10 +120,10 @@ namespace BskyCli.bsky.cli
         /// </summary>
         private void Logout()
         {
-            this.Client?.Logout().Wait();
+            this.Client!.Logout().Wait();
             this.Client = null;
             this.Prompt = Cli.NOT_LOGGED_IN_PROMPT;
-            ConsoleSuccess("Logged out successfully.");
+            ConsoleCommon.ConsoleSuccess("Logged out successfully.");
         }
 
         private void Help()
@@ -139,98 +139,24 @@ namespace BskyCli.bsky.cli
 
         private void Post()
         {
-            var content = string.Empty;
-            Console.WriteLine("Enter your post content");
-            while (true)
+            string content = ConsoleCommon.ConsoleTextEdit(string.Empty);
+            if (string.IsNullOrWhiteSpace(content))
             {
-                Console.Write("> ");
-                var line = Console.ReadLine();
-                if (line == ";")
-                {
-                    break;
-                }
-                content += line + Environment.NewLine;
-            }
-            Console.Clear();
-            ConsoleInfo("============================================================");
-            ConsoleInfo("         Is it okay to post the following content ?         ");
-            ConsoleInfo("============================================================");
-            ConsoleInfo(content);
-            ConsoleInfo("------------------------------------------------------------");
-            Console.Write("(y/n) > ");
-            var confirm = Console.ReadLine();
-            if (confirm?.Trim().ToLower() != "y")
-            {
-                ConsoleWarning("Post cancelled.");
+                ConsoleCommon.ConsoleWarning("No content entered. The post has been canceled.");
                 return;
             }
-            var response = this.Client.Post(content, DateTime.Now).Result;
-            Console.WriteLine($"Post successful! HTTP Status Code: {response.StatusCode}");
-        }
-
-        /// <summary>
-        /// 画面をクリアする
-        /// </summary>
-        private void ClearScreen()
-        {
-            Console.Clear();
-        }
-
-
-        /// <summary>
-        /// パスワードの入力を受付けるメソッドです。入力された文字は画面に表示されません。
-        /// </summary>
-        /// <returns></returns>
-        private static string ReadPassword()
-        {
-            string password = string.Empty;
-            ConsoleKeyInfo info = Console.ReadKey(true);
-            while (info.Key != ConsoleKey.Enter)
+            ConsoleCommon.ConsoleInfo("============================================================");
+            ConsoleCommon.ConsoleInfo("         Is it okay to post the following content ?         ");
+            ConsoleCommon.ConsoleInfo("============================================================");
+            ConsoleCommon.ConsoleInfo(content);
+            ConsoleCommon.ConsoleInfo("------------------------------------------------------------");
+            if (!ConsoleCommon.Confirm())
             {
-                if (info.Key != ConsoleKey.Backspace)
-                {
-                    password += info.KeyChar;
-                }
-                else if (info.Key == ConsoleKey.Backspace)
-                {
-                    if (!string.IsNullOrEmpty(password))
-                    {
-                        password = password.Substring(0, password.Length - 1);
-                    }
-                }
-                info = Console.ReadKey(true);
+                ConsoleCommon.ConsoleWarning("Post cancelled.");
+                return;
             }
-            Console.WriteLine();
-            return password;
-        }
-
-
-        private static void ConsoleInfo(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(message);
-            Console.ResetColor();
-        }
-
-        private static void ConsoleSuccess(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine(message);
-            Console.ResetColor();
-        }
-
-        private static void ConsoleWarning(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(message);
-            Console.ResetColor();
-        }
-
-        private static void ConsoleError(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(message);
-            Console.ResetColor();
+            var response = this.Client!.Post(content, DateTime.Now).Result;
+            Console.WriteLine($"Post successful! HTTP Status Code: {response?.StatusCode}");
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BskyCli.bsky.cli;
 using System.Reflection;
+using static BskyCli.bsky.cli.Cli;
 
 namespace BskyCli
 {

@@ -11,6 +11,15 @@ namespace BskyCli.bsky.cli
 
         private string Prompt { get; set; }
 
+        private static readonly Dictionary<string, string> Commands = new()
+        {
+            ["login"]  = "Log in to Bluesky",
+            ["logout"] = "Log out of Bluesky",
+            ["help"]   = "Show this help message",
+            ["post"]   = "Send post",
+            ["cls"]    = "Clear screen",
+            ["exit"]   = "Exit the CLI"
+        };
 
         private const string NOT_LOGGED_IN_PROMPT = "Not logged in";
 
@@ -22,7 +31,11 @@ namespace BskyCli.bsky.cli
             this.Prompt = Cli.NOT_LOGGED_IN_PROMPT;
         }
 
-
+        /// <summary>
+        /// Runメソッドは、ユーザーからのコマンド入力を待ち受け、適切なアクションを実行するためのメインループを提供します。
+        /// ユーザーが "exit" コマンドを入力するまで、このループは継続します。
+        /// </summary>
+        /// <returns></returns>
         internal async Task<int> Run()
         {
             Console.WriteLine("Type 'help' for a list of commands, or 'exit' to quit.");
@@ -84,7 +97,10 @@ namespace BskyCli.bsky.cli
             return 0;
         }
 
-
+        /// <summary>
+        /// WritePromptメソッドは、現在のプロンプトをコンソールに表示します。
+        /// ユーザーがログインしている場合は、プロンプトが緑色で表示されます。
+        /// </summary>
         private void WritePrompt()
         {
             if (this.Prompt != Cli.NOT_LOGGED_IN_PROMPT)
@@ -96,9 +112,8 @@ namespace BskyCli.bsky.cli
             Console.Write($" > ");
         }
 
-
         /// <summary>
-        /// 
+        /// Loginメソッドは、ユーザーにユーザー名またはメールアドレスとパスワードの入力を促し、Blueskyへのログインを試みます。
         /// </summary>
         /// <returns></returns>
         private void Login()
@@ -116,7 +131,7 @@ namespace BskyCli.bsky.cli
         }
 
         /// <summary>
-        /// 
+        /// Logoutメソッドは、現在のセッションを終了し、ユーザーをBlueskyからログアウトさせます。
         /// </summary>
         private void Logout()
         {
@@ -126,37 +141,57 @@ namespace BskyCli.bsky.cli
             ConsoleCommon.ConsoleSuccess("Logged out successfully.");
         }
 
+        /// <summary>
+        /// Helpメソッドは、利用可能なコマンドのリストとその説明をコンソールに表示します。
+        /// </summary>
         private void Help()
         {
             Console.WriteLine("Available commands:");
-            Console.WriteLine("  login  - Log in to Bluesky");
-            Console.WriteLine("  logout - Log out of Bluesky");
-            Console.WriteLine("  help   - Show this help message");
-            Console.WriteLine("  post   - Send post");
-            Console.WriteLine("  cls    - Clear Screen");
-            Console.WriteLine("  exit   - Exit the CLI");
+            foreach (var kv in Commands)
+                Console.WriteLine($"  {kv.Key,-6} - {kv.Value}");
         }
 
+        /// <summary>
+        /// Postメソッドは、ユーザーに投稿内容の入力を促し、確認後にBlueskyに投稿を送信します。
+        /// </summary>
         private void Post()
         {
             string content = ConsoleCommon.ConsoleTextEdit(string.Empty);
+            
             if (string.IsNullOrWhiteSpace(content))
             {
                 ConsoleCommon.ConsoleWarning("No content entered. The post has been canceled.");
                 return;
             }
-            ConsoleCommon.ConsoleInfo("============================================================");
-            ConsoleCommon.ConsoleInfo("         Is it okay to post the following content ?         ");
-            ConsoleCommon.ConsoleInfo("============================================================");
-            ConsoleCommon.ConsoleInfo(content);
-            ConsoleCommon.ConsoleInfo("------------------------------------------------------------");
+            
+            ShowPostConfirmation(content);
+            
             if (!ConsoleCommon.Confirm())
             {
                 ConsoleCommon.ConsoleWarning("Post cancelled.");
                 return;
             }
+
             var response = this.Client!.Post(content, DateTime.Now).Result;
             Console.WriteLine($"Post successful! HTTP Status Code: {response?.StatusCode}");
+        }
+
+        /// <summary>
+        /// ShowPostConfirmationメソッドは、ユーザーが投稿内容を確認できるようにするためのメソッドです。
+        /// </summary>
+        /// <param name="content"></param>
+        private void ShowPostConfirmation(string content)
+        {
+            int width = Console.WindowWidth;
+
+            ConsoleCommon.PrintLine('=',width);
+
+            string message = "Are you sure you want to post this?";
+            ConsoleCommon.ConsoleInfo(ConsoleCommon.CenterText(message, width));
+
+            ConsoleCommon.PrintLine('=', width);
+            ConsoleCommon.ConsoleInfo(content);
+            ConsoleCommon.PrintLine('-', width);
         }
     }
 }

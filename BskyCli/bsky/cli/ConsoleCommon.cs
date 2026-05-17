@@ -66,7 +66,10 @@
                 int viewTop    = 0; // 表示の最上行のインデックス
                 int digitWidth = DigitCount(lines.Count);
 
-                Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+                if (OperatingSystem.IsWindows())
+                {
+                    Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+                }
                 Console.CursorVisible = true;
 
                 while (true)
